@@ -60,7 +60,7 @@ export const CHERI_PRODUCTS: Product[] = [
     price: 1850000,
     originalPrice: 2200000,
     category: "outerwear",
-    categoryName: "Áo Khoác & Blazer",
+    categoryName: "PHỤ KIỆN",
     image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=800",
     secondaryImage: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=800",
     colors: [
@@ -188,7 +188,7 @@ export const CHERI_PRODUCTS: Product[] = [
     name: "Áo Len Cashmere Cổ Lọ Chéri (Chéri Cashmere Sweater)",
     price: 1650000,
     category: "outerwear",
-    categoryName: "Áo Khoác & Blazer",
+    categoryName: "PHỤ KIỆN",
     image: "https://images.unsplash.com/photo-1574164904299-3a102b110380?auto=format&fit=crop&q=80&w=800",
     secondaryImage: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800",
     colors: [
@@ -216,7 +216,7 @@ export const CHERI_CATEGORIES = [
   { id: "tops", name: "Áo Thiết Kế" },
   { id: "bottoms", name: "Chân Váy & Quần" },
   { id: "dresses", name: "Đầm Thiết Kế" },
-  { id: "outerwear", name: "Áo Khoác & Blazer" }
+  { id: "outerwear", name: "PHỤ KIỆN" }
 ];
 
 export const BLOGS = [

@@ -30,6 +30,17 @@ export default function Chatbox() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Global event listener to trigger chatbot open
+  useEffect(() => {
+    const handleTrigger = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener("open_cheri_chat", handleTrigger);
+    return () => {
+      window.removeEventListener("open_cheri_chat", handleTrigger);
+    };
+  }, []);
+
   // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,7 +79,7 @@ export default function Chatbox() {
       if (!response.ok) {
         throw new Error(data.error || "Không thể kết nối với stylist AI.");
       }
-      
+
       const assistantMessage: ChatMessage = {
         id: "assistant-" + Date.now(),
         role: "assistant",
@@ -123,7 +134,7 @@ export default function Chatbox() {
 
       {/* Main Chat Drawer */}
       {isOpen && (
-        <div 
+        <div
           className="w-full max-w-[390px] h-[550px] bg-white rounded-none shadow-none flex flex-col overflow-hidden border border-[#74070e]/20 transition-all duration-300"
         >
           {/* Header */}
@@ -140,7 +151,7 @@ export default function Chatbox() {
                 </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               className="text-[#74070e]/60 hover:text-[#74070e] p-1.5 hover:bg-stone-50 transition-colors cursor-pointer rounded-none"
             >
@@ -159,17 +170,16 @@ export default function Chatbox() {
             {messages.map((message) => {
               const isAssistance = message.role === "assistant";
               return (
-                <div 
+                <div
                   key={message.id}
                   className={`flex ${isAssistance ? "justify-start" : "justify-end"}`}
                 >
                   <div className={`max-w-[85%] flex flex-col ${isAssistance ? "items-start" : "items-end"}`}>
-                    <div 
-                      className={`rounded-none px-4 py-3 text-[13px] leading-relaxed ${
-                        isAssistance 
-                          ? "bg-white text-gray-800 border border-[#74070e]/5 shadow-none" 
+                    <div
+                      className={`rounded-none px-4 py-3 text-[13px] leading-relaxed ${isAssistance
+                          ? "bg-white text-gray-800 border border-[#74070e]/5 shadow-none"
                           : "bg-[#74070e] text-white border border-[#74070e] shadow-none"
-                      }`}
+                        }`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
@@ -215,7 +225,7 @@ export default function Chatbox() {
           )}
 
           {/* Chat text input box */}
-          <form 
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSend(input);

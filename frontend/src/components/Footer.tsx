@@ -1,6 +1,10 @@
 import { Facebook, Instagram, Youtube, Award, CreditCard, ShieldCheck, CheckSquare, Sparkles } from "lucide-react";
 
-export default function Footer() {
+interface FooterProps {
+  onNavigate?: (page: string) => void;
+}
+
+export default function Footer({ onNavigate }: FooterProps) {
   return (
     <footer className="bg-white text-gray-700 py-12 px-6 sm:px-12 border-t border-[#74070e]/10 font-sans">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 text-[13px] leading-relaxed mb-10">
@@ -27,14 +31,28 @@ export default function Footer() {
           </h4>
           <ul className="space-y-2.5 font-light text-gray-600">
             <li>
-              <a href="#guide" className="hover:text-[#74070e] transition-colors cursor-pointer">
+              <button 
+                onClick={() => onNavigate?.("ordering_guide")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
                 Hướng dẫn đặt hàng
-              </a>
+              </button>
             </li>
             <li>
-              <a href="#faqs" className="hover:text-[#74070e] transition-colors cursor-pointer">
-                FAQs
-              </a>
+              <button 
+                onClick={() => onNavigate?.("faqs")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
+                Câu hỏi thường gặp
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={() => onNavigate?.("tracking")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
+                Theo dõi đơn hàng
+              </button>
             </li>
           </ul>
         </div>
@@ -48,24 +66,36 @@ export default function Footer() {
           </h4>
           <ul className="space-y-2.5 font-light text-gray-600">
             <li>
-              <a href="#swap-policy" className="hover:text-[#74070e] transition-colors cursor-pointer">
+              <button 
+                onClick={() => onNavigate?.("return_policy")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
                 Chính sách đổi trả
-              </a>
+              </button>
             </li>
             <li>
-              <a href="#warranty-policy" className="hover:text-[#74070e] transition-colors cursor-pointer">
+              <button 
+                onClick={() => onNavigate?.("warranty_policy")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
                 Chính sách bảo hành
-              </a>
+              </button>
             </li>
             <li>
-              <a href="#privacy-policy" className="hover:text-[#74070e] transition-colors cursor-pointer">
+              <button 
+                onClick={() => onNavigate?.("privacy_policy")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
                 Chính sách bảo mật
-              </a>
+              </button>
             </li>
             <li>
-              <a href="#shipping-policy" className="hover:text-[#74070e] transition-colors cursor-pointer">
+              <button 
+                onClick={() => onNavigate?.("shipping_policy")}
+                className="hover:text-[#74070e] transition-colors cursor-pointer text-left border-none bg-transparent p-0 outline-none"
+              >
                 Chính sách vận chuyển - giao hàng
-              </a>
+              </button>
             </li>
           </ul>
         </div>

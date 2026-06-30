@@ -410,6 +410,229 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// Seeded pseudo-random generator to ensure consistency on refresh for any specific orderId
+function seededRandom(seedStr: string) {
+  let h = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(31, h) + seedStr.charCodeAt(i) | 0;
+  }
+  return function() {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+// Shipping track API that simulates a live integration with premium carrier Chéri Express Courier (GHN / GHTK style)
+app.get("/api/shipping/track/:orderId", (req, res) => {
+  const { orderId } = req.params;
+  const phoneParam = req.query.phone as string || "";
+  const statusParam = req.query.status as string || "";
+
+  if (!orderId) {
+    res.status(400).json({ error: "Mã đơn hàng không hợp lệ." });
+    return;
+  }
+
+  const rand = seededRandom(orderId);
+  
+  // Predict driver and route based on orderId seed
+  const drivers = ["Nguyễn Văn Nam", "Trần Hoàng Long", "Lê Gia Huy", "Phạm Cao Sơn", "Vũ Hoàng Gia"];
+  const driverPhotos = [
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150",
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150",
+    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150"
+  ];
+  
+  const driverIdx = Math.floor(rand() * drivers.length);
+  const driverName = drivers[driverIdx];
+  const driverImg = driverPhotos[driverIdx];
+  const driverPhone = `09${Math.floor(1000 + rand() * 9000)} ${Math.floor(100 + rand() * 900)} ${Math.floor(10 + rand() * 90)}`;
+
+  // Determine current status. If client passed statusParam, respect it. Otherwise, default deterministically
+  let currentStatus: "pending" | "preparing" | "shipped" | "delivering" | "delivered" = "shipped";
+  
+  if (statusParam) {
+    if (statusParam === "preparing") {
+      // Map "Chờ giao hàng" to "Đang giao" during tracking as requested
+      currentStatus = "delivering";
+    } else if (["pending", "shipped", "delivering", "delivered"].includes(statusParam)) {
+      currentStatus = statusParam as any;
+    }
+  } else {
+    // Deterministic selection if no status provided
+    const val = rand();
+    if (orderId === "CR-9582") {
+      currentStatus = "delivered";
+    } else if (orderId === "CR-5621") {
+      // Default order in Chờ giao hàng tab tracks as "đang giao"
+      currentStatus = "delivering";
+    } else if (val < 0.15) {
+      currentStatus = "pending";
+    } else if (val < 0.35) {
+      currentStatus = "delivering";
+    } else if (val < 0.65) {
+      currentStatus = "shipped";
+    } else if (val < 0.85) {
+      currentStatus = "delivering";
+    } else {
+      currentStatus = "delivered";
+    }
+  }
+
+  // Set recipient coordinates (Hồ Chí Minh target coordinates)
+  // Base coordinates around Linh Trung, Thủ Đức or Ho Chi Minh City general
+  const destLat = 10.8582 + (rand() - 0.5) * 0.04;
+  const destLng = 106.7841 + (rand() - 0.5) * 0.04;
+
+  const startLat = 10.7760; // District 1 Warehouse
+  const startLng = 106.7011;
+
+  // Intermediary coordinates based on status
+  let currentLat = startLat;
+  let currentLng = startLng;
+  
+  if (currentStatus === "pending" || currentStatus === "preparing") {
+    currentLat = startLat;
+    currentLng = startLng;
+  } else if (currentStatus === "shipped") {
+    currentLat = startLat + (destLat - startLat) * 0.4;
+    currentLng = startLng + (destLng - startLng) * 0.4;
+  } else if (currentStatus === "delivering") {
+    currentLat = startLat + (destLat - startLat) * 0.85;
+    currentLng = startLng + (destLng - startLng) * 0.85;
+  } else if (currentStatus === "delivered") {
+    currentLat = destLat;
+    currentLng = destLng;
+  }
+
+  const statusTextMap = {
+    pending: "Đơn hàng đã tiếp nhận",
+    preparing: "Đang soạn hàng tại Atelier",
+    shipped: "Đang vận chuyển liên tỉnh",
+    delivering: "Shipper đang giao tới quý cô",
+    delivered: "Đã giao hàng thành công"
+  };
+
+  const statusText = statusTextMap[currentStatus];
+
+  // Dynamic deterministic timeline generation relative to actual date or simulated historic days
+  const timeline: any[] = [];
+  
+  // Format dates: we can use realistic Vietnamese formats
+  const dateStr = (daysAgo: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(Math.floor(8 + rand() * 10)).padStart(2, '0');
+    const mins = String(Math.floor(10 + rand() * 49)).padStart(2, '0');
+    return `${hours}:${mins} - ${day}/${month}/${year}`;
+  };
+
+  // Build timeline nodes depending on status
+  timeline.push({
+    time: dateStr(4),
+    title: "Đặt hàng thành công",
+    desc: "Đơn đặt hàng ghi nhận thành công từ hệ thống thanh toán Chéri Haute Couture.",
+    location: "Hệ thống điện tử Chéri",
+    isCompleted: true
+  });
+
+  if (currentStatus !== "pending") {
+    timeline.push({
+      time: dateStr(3),
+      title: "Đã kiểm duyệt & Xác nhận đơn hàng",
+      desc: "Chuyên viên tư vấn Chéri đã liên hệ xác nhận size áo và màu sắc tinh tế cho Quý cô.",
+      location: "Chéri Atelier, Quận 3, HCM",
+      isCompleted: true
+    });
+    timeline.push({
+      time: dateStr(2.5),
+      title: "Đóng gói & Kiểm tra Haute Couture",
+      desc: "Sản phẩm được là ủi bằng hơi nước nước ấm, bọc túi lụa chống ẩm và xếp hộp thắt ruy-băng nhung sang trọng.",
+      location: "Tổng kho Chéri, Thủ Đức, HCM",
+      isCompleted: true
+    });
+  }
+
+  if (currentStatus === "shipped" || currentStatus === "delivering" || currentStatus === "delivered") {
+    timeline.push({
+      time: dateStr(1.5),
+      title: "Bàn giao đơn vị chuyển phát nhanh",
+      desc: "Bàn giao bưu kiện thành công cho Chéri Premium Express. Xe vận tải liên tỉnh tiến hành di chuyển.",
+      location: "Bưu cục trung chuyển Thủ Đức, HCM",
+      isCompleted: true
+    });
+    timeline.push({
+      time: dateStr(1),
+      title: "Rời bưu cục phân loại",
+      desc: "Bưu kiện đã được phân loại tự động và đang trên hành trình luân chuyển tới địa bàn quận lân cận.",
+      location: "Trung tâm Khai thác Vùng Nam Bộ",
+      isCompleted: true
+    });
+  }
+
+  if (currentStatus === "delivering" || currentStatus === "delivered") {
+    timeline.push({
+      time: dateStr(0.2),
+      title: "Shipper đang giao hàng",
+      desc: `Nhân viên vận chuyển ${driverName} (${driverPhone}) đang giữ gói hàng và liên hệ giao tới địa chỉ của Quý cô. Vui lòng giữ sóng điện thoại thông suốt.`,
+      location: "Bưu cục phát nội ô",
+      isCompleted: true
+    });
+  }
+
+  if (currentStatus === "delivered") {
+    timeline.push({
+      time: dateStr(0),
+      title: "Giao hàng thành công",
+      desc: "Bưu tá đã hoàn tất trao tận tay hộp lụa Chéri cho Quý cô. Chân thành cảm ơn Quý cô đã sủng ái các thiết kế thủ công tinh xảo của Chéri!",
+      location: "Địa chỉ của Quý cô",
+      isCompleted: true
+    });
+  }
+
+  // Reverse timeline so newest experiences are always displayed on top for luxurious usability
+  timeline.reverse();
+
+  const mockAddress = phoneParam.includes("0881") || orderId === "CR-9582"
+    ? "118 Linh Trung, Phường Linh Trung, Thủ Đức, Thành phố Hồ Chí Minh"
+    : "Địa chỉ đăng ký đơn hàng";
+
+  const recipientName = phoneParam.includes("0881") || orderId === "CR-9582" ? "Nguyễn Thơ" : "Quý khách Chéri";
+  const recipientPhone = phoneParam ? phoneParam : "0881 *** ***";
+
+  res.json({
+    orderId,
+    carrierName: "Chéri Premium Logistics",
+    carrierLogo: "✨",
+    trackingNumber: `CR-SP-${orderId.replace(/[^a-zA-Z0-9]/g, "") || "9582"}-${Math.floor(100 + rand() * 900)}`,
+    driverName,
+    driverPhone,
+    driverImg,
+    estimatedDeliveryDate: currentStatus === "delivered" ? "Đã nhận hàng thành công" : "Trong ngày từ 8:00 - 18:00",
+    currentStatus,
+    currentStatusText: statusText,
+    recipientName,
+    recipientPhone,
+    recipientAddress: mockAddress,
+    shippingMethod: "Hỏa tốc Premium (Chéri Signature Box)",
+    timeline,
+    coordinates: {
+      current: { lat: currentLat, lng: currentLng },
+      steps: [
+        { name: "Atelier Chéri (Q3)", lat: startLat, lng: startLng, reached: true },
+        { name: "Trung tâm phát", lat: startLat + (destLat - startLat) * 0.6, lng: startLng + (destLng - startLng) * 0.6, reached: currentStatus !== "pending" && currentStatus !== "preparing" },
+        { name: "Nhà Quý cô", lat: destLat, lng: destLng, reached: currentStatus === "delivered" }
+      ]
+    }
+  });
+});
+
 // Serve products in structured JSON dynamically from Google Sheets
 // Setup cache to avoid hitting Google Sheets rate limits on every reload
 let cachedProducts: any[] = [];

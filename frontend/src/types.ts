@@ -48,7 +48,7 @@ export interface Order {
   date: string;
   items: OrderItem[];
   total: number;
-  status: "pending" | "preparing" | "shipped" | "delivered";
+  status: "pending" | "preparing" | "shipped" | "delivering" | "delivered" | "cancelled" | "returned";
   statusText: string;
   address: string;
   phone: string;
@@ -63,3 +63,34 @@ export interface UserProfile {
   avatar: string;
   orders: Order[];
 }
+
+export interface TrackingMilestone {
+  time: string;
+  title: string;
+  desc: string;
+  location: string;
+  isCompleted: boolean;
+}
+
+export interface ShippingTracking {
+  orderId: string;
+  carrierName: string;
+  carrierLogo?: string;
+  trackingNumber: string;
+  driverName: string;
+  driverPhone: string;
+  driverImg?: string;
+  estimatedDeliveryDate: string;
+  currentStatus: "pending" | "preparing" | "shipped" | "delivering" | "delivered" | "failed";
+  currentStatusText: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAddress: string;
+  shippingMethod: string;
+  timeline: TrackingMilestone[];
+  coordinates?: {
+    current: { lat: number; lng: number };
+    steps: { name: string; lat: number; lng: number; reached: boolean }[];
+  };
+}
+
